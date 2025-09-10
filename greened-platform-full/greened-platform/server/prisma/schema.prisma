@@ -1,0 +1,139 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(STUDENT)
+  points    Int      @default(0)
+  badges    String[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  quizSubmissions   QuizSubmission[]
+  submissions       Submission[]
+  forumThreads      ForumThread[]
+  forumReplies      ForumReply[]
+}
+
+enum Role {
+  STUDENT
+  TEACHER
+  ADMIN
+}
+
+model Module {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  content     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  quizzes Quiz[]
+}
+
+model Quiz {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  moduleId    Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  module      Module   @relation(fields: [moduleId], references: [id])
+  questions   Question[]
+  submissions QuizSubmission[]
+}
+
+model Question {
+  id           Int    @id @default(autoincrement())
+  quizId       Int
+  questionText String
+  options      String[]
+  correctAnswer String
+  // Relations
+  quiz         Quiz   @relation(fields: [quizId], references: [id])
+}
+
+model QuizSubmission {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  quizId    Int
+  score     Int
+  answers   String[]
+  createdAt DateTime @default(now())
+  // Relations
+  user      User     @relation(fields: [userId], references: [id])
+  quiz      Quiz     @relation(fields: [quizId], references: [id])
+}
+
+model Challenge {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  points      Int      @default(50)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  submissions Submission[]
+}
+
+model Submission {
+  id              Int       @id @default(autoincrement())
+  userId          Int
+  challengeId     Int
+  evidenceUrl     String?
+  description     String?
+  status          Status    @default(PENDING)
+  rejectionReason String?
+  verifiedAt      DateTime?
+
+  // Relations
+  user            User      @relation(fields: [userId], references: [id])
+  challenge       Challenge @relation(fields: [challengeId], references: [id])
+}
+
+enum Status {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model ForumThread {
+  id        Int      @id @default(autoincrement())
+  title     String
+  content   String
+  authorId  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  author    User     @relation(fields: [authorId], references: [id])
+  replies   ForumReply[]
+}
+
+model ForumReply {
+  id        Int      @id @default(autoincrement())
+  content   String
+  threadId  Int
+  authorId  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  thread    ForumThread @relation(fields: [threadId], references: [id])
+  author    User        @relation(fields: [authorId], references: [id])
+}
